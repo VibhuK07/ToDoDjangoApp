@@ -61,12 +61,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         if user.is_authenticated:
             return Task.objects.filter(
                 models.Q(is_private=False) |
-                models.Q(creator=user) |
+                models.Q(project__creator=user) |
                 models.Q(assigned_to=user) |
                 models.Q(project__collaborators__user=user)
             ).distinct()
         return Task.objects.filter(project__is_public=True, is_private=False)
 
+class UserTaskViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        return Task.objects.filter(assigned_to=user_id)
+    
 class DependencyViewSet(viewsets.ModelViewSet):
     serializer_class = DependencySerializer
     permission_classes = [permissions.IsAuthenticated]
